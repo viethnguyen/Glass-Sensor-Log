@@ -48,7 +48,7 @@ public class WriteToFile extends AsyncTask {
 		line = Long.toString(System.currentTimeMillis()) + "," + tag + line + "\n";
 
 		try {
-			Log.d(TAG, line);
+			//Log.d(TAG, line);
 			if(file !=null){
 				file.write(line);
 			}

@@ -18,6 +18,12 @@
             android:name="edu.rutgers.winlab.glasssensorlog.MenuActivity"
             android:theme="@style/MenuTheme"
             android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="com.google.android.glass.action.VOICE_TRIGGER" />
+            </intent-filter>
+            <meta-data
+                android:name="com.google.android.glass.VoiceTrigger"
+                android:resource="@xml/voice_trigger_menu" />
         </activity>
         <service
             android:name="edu.rutgers.winlab.glasssensorlog.SensorLogService"
@@ -34,6 +40,7 @@
     </application>
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 	<uses-permission android:name="android.permission.INTERNET"/> 
 </manifest>

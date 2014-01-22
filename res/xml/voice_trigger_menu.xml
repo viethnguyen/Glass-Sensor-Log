@@ -14,4 +14,4 @@
      limitations under the License.
 -->
 
-<trigger keyword="@string/startlogservice" />
+<trigger keyword="@string/start_menu" />

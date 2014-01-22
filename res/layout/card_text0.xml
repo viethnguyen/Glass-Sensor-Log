@@ -16,7 +16,7 @@
               android:layout_height="wrap_content"
               android:textSize="80px"
               android:textColor="@android:color/holo_green_dark"
-              android:text="@string/livecard" />
+              android:text="@string/status0" />
 
 	</LinearLayout>
     <TextView

@@ -6,8 +6,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.google.android.glass.timeline.LiveCard;
 import com.google.android.glass.timeline.TimelineManager;
@@ -20,6 +23,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -64,7 +68,7 @@ public class SensorLogService extends Service {
     }
     
     private SensorManager sensorManager;
-    //private LocationManager locationManager;
+    private LocationManager locationManager;
     private Map<Integer, String> sensorTypes ;
     private Map<Integer, Sensor> sensors;
     
@@ -83,7 +87,7 @@ public class SensorLogService extends Service {
     	for(Integer type : sensorTypes.keySet()){
     		sensors.put(type, sensorManager.getDefaultSensor(type));
     	}
-    	//locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+    	locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
     }
     
 	@Override
@@ -96,8 +100,41 @@ public class SensorLogService extends Service {
 		publishCard(this);
 		setupSensorLog();
 		startRecording();
+		
+		//Setup Timer to update the live card
+		if(isTimerUsed){ //Update user using RemoteViews 
+			Timer timer = new Timer();
+			timer.scheduleAtFixedRate(new UpdateLiveCardTask(), 1000, 5000);
+			counter = 0;
+		}
 	}
+	private boolean isTimerUsed = false;
+	private int counter; 
 	
+	class UpdateLiveCardTask extends TimerTask{
+		public void run(){
+			counter = (counter + 1) % 3;
+			switch(counter){
+			case 0:
+				Log.d(TAG, "0");
+				mLiveCard.setViews(new RemoteViews(SensorLogService.this.getPackageName(), R.layout.card_text0));
+				break;
+			case 1:	
+				mLiveCard.setViews(new RemoteViews(SensorLogService.this.getPackageName(), R.layout.card_text1));
+				Log.d(TAG, "1");
+				break;
+			case 2:	
+				mLiveCard.setViews(new RemoteViews(SensorLogService.this.getPackageName(), R.layout.card_text2));
+				Log.d(TAG, "2");
+				break;
+			default:
+				mLiveCard.setViews(new RemoteViews(SensorLogService.this.getPackageName(), R.layout.card_text0));
+				break;
+			}
+			mLiveCard.unpublish();
+			mLiveCard.publish(LiveCard.PublishMode.REVEAL);
+    	}
+	}
 	@Override
 	public void onDestroy() {
 		Log.d(TAG, "onDestroy");
@@ -123,8 +160,6 @@ public class SensorLogService extends Service {
 	
 	public BufferedWriter file;
 	
-
-	
 	private String currentFilename ="";
 	
 	private void startRecording(){
@@ -141,12 +176,18 @@ public class SensorLogService extends Service {
 		for(Sensor sensor:sensors.values()){
 			sensorManager.registerListener(sensorListener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
 		}
-		//locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0 , 0, locationListener);
+		
+		List<String> providers = locationManager.getAllProviders();
+		for(String provider: providers){
+			Log.d(TAG, provider + " - isEnabled: " + String.valueOf(locationManager.isProviderEnabled(provider)));
+			locationManager.requestLocationUpdates(provider, 0, 0, locationListener);
+		}
+		
 	}
 	
 	private void stopRecording(){
 		sensorManager.unregisterListener(sensorListener);
-		//locationManager.removeUpdates(locationListener);
+		locationManager.removeUpdates(locationListener);
 		try{
 			file.close();
 			Log.d(TAG, "File closed");
@@ -172,6 +213,7 @@ public class SensorLogService extends Service {
 
 		@Override
 		public void onLocationChanged(Location location) {
+			Log.d(TAG,"Location changed");
 			new WriteToFile().execute(file, "GPS", location);
 		}
 
