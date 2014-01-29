@@ -43,6 +43,7 @@ public class SensorLogService extends Service {
     private LiveCard mLiveCard;
     
     private SensorLogApplication sensorLog;
+    private OrientationManager mOrientationManager;
     
     private void publishCard(Context context){
     	if(mLiveCard == null){
@@ -83,11 +84,15 @@ public class SensorLogService extends Service {
 		sensorTypes.put(Sensor.TYPE_GRAVITY, "GRAV");
 		sensorTypes.put(Sensor.TYPE_ROTATION_VECTOR, "ROTATION");
 		
+		//set up managers: sensor, location, orientation
     	sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+    	
     	for(Integer type : sensorTypes.keySet()){
     		sensors.put(type, sensorManager.getDefaultSensor(type));
     	}
     	locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+    	
+    	mOrientationManager = new OrientationManager(sensorManager, locationManager);
     }
     
 	@Override
@@ -173,10 +178,17 @@ public class SensorLogService extends Service {
 		}catch(IOException e){
 			e.printStackTrace();
 		}
+		
+		//register sensor listeners
 		for(Sensor sensor:sensors.values()){
 			sensorManager.registerListener(sensorListener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
 		}
 		
+		//register orientation listener
+        mOrientationManager.addOnChangedListener(mCompassListener);
+        mOrientationManager.start();
+		
+		//register location listener
 		List<String> providers = locationManager.getAllProviders();
 		for(String provider: providers){
 			Log.d(TAG, provider + " - isEnabled: " + String.valueOf(locationManager.isProviderEnabled(provider)));
@@ -184,6 +196,25 @@ public class SensorLogService extends Service {
 		}
 		
 	}
+	
+    private final OrientationManager.OnChangedListener mCompassListener =
+            new OrientationManager.OnChangedListener() {
+
+        @Override
+        public void onOrientationChanged(OrientationManager orientationManager) {
+        	new WriteToFile().execute(file, "HEADING", orientationManager.getHeading());
+        }
+
+        @Override
+        public void onLocationChanged(OrientationManager orientationManager) {
+
+        }
+
+        @Override
+        public void onAccuracyChanged(OrientationManager orientationManager) {
+
+        }
+    };
 	
 	private void stopRecording(){
 		sensorManager.unregisterListener(sensorListener);

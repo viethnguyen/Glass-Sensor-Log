@@ -4,4 +4,8 @@
 	    android:id="@+id/exit_service"
 	    android:title="@string/titleMenuExit"
 	    android:icon="@android:drawable/ic_delete" />
+	<item 
+	    android:id="@+id/report_ntc"
+	    android:title="@string/titleMenuNTC"
+	    android:icon="@android:drawable/ic_dialog_info" />
 </menu>
