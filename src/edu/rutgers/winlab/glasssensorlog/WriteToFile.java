@@ -21,6 +21,9 @@ public class WriteToFile extends AsyncTask {
 		else if (params[1].equals("ENTER") || params[1].equals("EXIT")){
 			write(file, (String) params[1], (String[]) null);
 		}
+		else if (params[1].equals("HEADING")){
+			write(file, (String) "HEADING", new String[]{String.valueOf(params[2])});
+		}
 		else {
 			float[] values = (float[]) params[2];
 			String[] array = new String[values.length];
