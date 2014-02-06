@@ -39,12 +39,14 @@ public class MenuActivity extends Activity {
 		case R.id.exit_service:
 			if(sensorLog.isServiceRunning()){
 				stopService(new Intent(this, SensorLogService.class));
+				stopService(new Intent(this, SendDataService.class));
 			}
 			finish();
 			return true;
 		case R.id.report_ntc:
 			if(sensorLog.isServiceRunning()){
 				stopService(new Intent(this, SensorLogService.class));
+				stopService(new Intent(this, SendDataService.class));
 			}
 			new GetTime().execute();
 			finish();

@@ -54,6 +54,7 @@ public class WriteToFile extends AsyncTask {
 			//Log.d(TAG, line);
 			if(file !=null){
 				file.write(line);
+				
 			}
 			
 		} catch (IOException e) { 
