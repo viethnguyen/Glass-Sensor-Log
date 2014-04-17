@@ -23,4 +23,14 @@
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowAnimationStyle">@null</item>
     </style>
+    
+    <style name="Text">
+        <item name="android:layout_width">150px</item>
+        <item name="android:layout_height">150px</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:layout_marginTop">-17px</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">130px</item>
+    </style>
+    
 </resources>

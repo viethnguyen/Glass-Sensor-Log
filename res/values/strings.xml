@@ -7,7 +7,7 @@
 	<string name="titleMenuToggle">Toggle</string>
 	<string name="titleMenuExit">Exit</string>
 	<string name="titleMenuNTC">Report NTC</string>
-	<string name="startlogservice">Log sensor</string>
+	<string name="startlogservice">Log sensor</string> 
 	<string name="start_menu">OK glass</string>
 	<string name="livecard">Logging...</string>
 	<string name="status0">Logging.</string>

@@ -33,7 +33,6 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import com.google.android.glass.timeline.LiveCard;
-import com.google.android.glass.timeline.TimelineManager;
 
 public class SendDataService extends Service {
     private static final String TAG = "SensorLogService";
@@ -41,7 +40,6 @@ public class SendDataService extends Service {
 
     private static final boolean D = true;
     
-    private TimelineManager mTimelineManager;
     private LiveCard mLiveCard;
     
     private SensorLogApplication sensorLog;
@@ -72,7 +70,7 @@ public class SendDataService extends Service {
     
     private void publishCard(Context context){
     	if(mLiveCard == null){
-    		mLiveCard = mTimelineManager.createLiveCard(LIVE_CARD_TAG);
+    		mLiveCard = new LiveCard(this, LIVE_CARD_TAG);
     		mLiveCard.setViews(new RemoteViews(context.getPackageName(), R.layout.card_text));
     		Intent intent = new Intent(this, MenuActivity.class);
     		mLiveCard.setAction(PendingIntent.getActivity(context, 0, intent, 0));
@@ -118,7 +116,6 @@ public class SendDataService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		mTimelineManager = TimelineManager.from(this);
 		
 		sensorLog = (SensorLogApplication) this.getApplication();
 
@@ -183,7 +180,7 @@ public class SendDataService extends Service {
 	@Override
 	public void onDestroy() {
 		Log.d(TAG, "onDestroy");
-		unpublishCard(this);
+		//unpublishCard(this);
 		super.onDestroy();
 		this.sensorLog.setServiceRunning(false);
         // Stop the Bluetooth chat services
@@ -195,7 +192,7 @@ public class SendDataService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStartCommand(intent, flags, startId);
 		this.sensorLog.setServiceRunning(true);
-		publishCard(this);
+		//publishCard(this);
         
 		if (mBluetoothManager != null) {
             // Only if the state is STATE_NONE, do we know that we haven't started already

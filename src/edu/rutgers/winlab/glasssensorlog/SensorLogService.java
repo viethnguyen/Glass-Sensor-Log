@@ -8,12 +8,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import com.google.android.glass.timeline.LiveCard;
-import com.google.android.glass.timeline.TimelineManager;
 
 import android.app.PendingIntent;
 import android.app.Service;
@@ -23,23 +17,23 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import com.google.android.glass.timeline.LiveCard;
+import com.google.android.glass.timeline.LiveCard.PublishMode;
+
 public class SensorLogService extends Service {
 
-    private static final String TAG = "SensorLogService";
+    private static final String TAG = SensorLogService.class.getSimpleName();
     private static final String LIVE_CARD_TAG = "sensorlog";
     
-    private TimelineManager mTimelineManager;
     private LiveCard mLiveCard;
     
     private SensorLogApplication sensorLog;
@@ -47,7 +41,7 @@ public class SensorLogService extends Service {
     
     private void publishCard(Context context){
     	if(mLiveCard == null){
-    		mLiveCard = mTimelineManager.createLiveCard(LIVE_CARD_TAG);
+    		mLiveCard = new LiveCard(this, LIVE_CARD_TAG);
     		mLiveCard.setViews(new RemoteViews(context.getPackageName(), R.layout.card_text));
     		Intent intent = new Intent(this, MenuActivity.class);
     		mLiveCard.setAction(PendingIntent.getActivity(context, 0, intent, 0));
@@ -55,8 +49,7 @@ public class SensorLogService extends Service {
     		Log.d(TAG, "Done publishing LiveCard");
     		
     	}else{
-    		//jump to the Live card when API is available
-    		return;
+    		mLiveCard.navigate();
     	}
     }
     
@@ -98,48 +91,14 @@ public class SensorLogService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		mTimelineManager = TimelineManager.from(this);
 		
 		sensorLog = (SensorLogApplication) this.getApplication();
 
-		publishCard(this);
 		setupSensorLog();
 		startRecording();
 		
-		//Setup Timer to update the live card
-		if(isTimerUsed){ //Update user using RemoteViews 
-			Timer timer = new Timer();
-			timer.scheduleAtFixedRate(new UpdateLiveCardTask(), 1000, 5000);
-			counter = 0;
-		}
 	}
-	private boolean isTimerUsed = false;
-	private int counter; 
 	
-	class UpdateLiveCardTask extends TimerTask{
-		public void run(){
-			counter = (counter + 1) % 3;
-			switch(counter){
-			case 0:
-				Log.d(TAG, "0");
-				mLiveCard.setViews(new RemoteViews(SensorLogService.this.getPackageName(), R.layout.card_text0));
-				break;
-			case 1:	
-				mLiveCard.setViews(new RemoteViews(SensorLogService.this.getPackageName(), R.layout.card_text1));
-				Log.d(TAG, "1");
-				break;
-			case 2:	
-				mLiveCard.setViews(new RemoteViews(SensorLogService.this.getPackageName(), R.layout.card_text2));
-				Log.d(TAG, "2");
-				break;
-			default:
-				mLiveCard.setViews(new RemoteViews(SensorLogService.this.getPackageName(), R.layout.card_text0));
-				break;
-			}
-			mLiveCard.unpublish();
-			mLiveCard.publish(LiveCard.PublishMode.REVEAL);
-    	}
-	}
 	@Override
 	public void onDestroy() {
 		Log.d(TAG, "onDestroy");
@@ -149,11 +108,29 @@ public class SensorLogService extends Service {
 		stopRecording();
 	}
 	
+	private StatusDrawer mCallback;
+	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStartCommand(intent, flags, startId);
 		this.sensorLog.setServiceRunning(true);
-		publishCard(this);
+		if(mLiveCard == null){
+			mLiveCard = new LiveCard(this, LIVE_CARD_TAG);
+			
+			//Keep track of the callback to remove it before unpublishing
+			mCallback = new StatusDrawer(this);
+			mLiveCard.setDirectRenderingEnabled(true).getSurfaceHolder().addCallback(mCallback);
+			
+			Intent menuIntent = new Intent(this, MenuActivity.class);
+			menuIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+			mLiveCard.setAction(PendingIntent.getActivity(this, 0, menuIntent, 0));
+			mLiveCard.attach(this);
+			mLiveCard.publish(PublishMode.REVEAL);
+		}
+		else{
+			mLiveCard.navigate();
+		}
+		
 		return START_STICKY;
 	}
 	

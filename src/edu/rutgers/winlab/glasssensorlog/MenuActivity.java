@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.Menu;
@@ -18,13 +19,16 @@ public class MenuActivity extends Activity {
 	private static final String host = "nist1-nj.ustiming.org";
 	
 	SensorLogApplication sensorLog;
+
+    private final Handler mHandler = new Handler();
+    
 	
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		sensorLog = (SensorLogApplication) getApplication();
+	public void onAttachedToWindow() {
+		super.onAttachedToWindow();
+		openOptionsMenu();
 	}
-
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
@@ -37,19 +41,14 @@ public class MenuActivity extends Activity {
 		//Handle item selection
 		switch(item.getItemId()){
 		case R.id.exit_service:
-			if(sensorLog.isServiceRunning()){
-				stopService(new Intent(this, SensorLogService.class));
-				stopService(new Intent(this, SendDataService.class));
-			}
-			finish();
-			return true;
-		case R.id.report_ntc:
-			if(sensorLog.isServiceRunning()){
-				stopService(new Intent(this, SensorLogService.class));
-				stopService(new Intent(this, SendDataService.class));
-			}
-			new GetTime().execute();
-			finish();
+			post(new Runnable(){
+
+				@Override
+				public void run() {
+					stopService(new Intent(MenuActivity.this, SensorLogService.class));
+				}
+				
+			});
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
@@ -59,31 +58,15 @@ public class MenuActivity extends Activity {
 	@Override
 	public void onOptionsMenuClosed(Menu menu) {
 		//Nothing else to do, closing the Activity
-		//finish();
+		finish();
 	}
 
-	@Override
-	protected void onResume() {
-		super.onResume();
-		openOptionsMenu();
-	}
 	
-	class GetTime extends AsyncTask<String, Integer, String>{
-
-		@Override
-		protected String doInBackground(String... params) {
-			
-			SntpClient client = new SntpClient();
-			if(client.requestTime(host, 5000) == true){
-				long now = client.getNtpTime() + SystemClock.elapsedRealtime() - client.getNtpTimeReference();
-				long distance = client.getNtpTime() + SystemClock.elapsedRealtime() - client.getNtpTimeReference() - System.currentTimeMillis();
-				Log.d(TAG, "distance: " + String.valueOf(distance));
-				return String.valueOf(now);
-			}	
-			return null;
-
-		}
-		
-	}
-	
+    /**
+     * Posts a {@link Runnable} at the end of the message loop, overridable for testing.
+     */
+    protected void post(Runnable runnable) {
+        mHandler.post(runnable);
+    }
+    
 }
